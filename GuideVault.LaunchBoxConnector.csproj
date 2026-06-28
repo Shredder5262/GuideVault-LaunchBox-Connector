@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
@@ -49,3 +49,4 @@
     <EmbeddedResource Include="Assets\GuideVault.MatchedItems.png" LogicalName="GuideVault.LaunchBoxConnector.Assets.GuideVault.MatchedItems.png" Condition="Exists('Assets\GuideVault.MatchedItems.png')" />
   </ItemGroup>
 </Project>
+

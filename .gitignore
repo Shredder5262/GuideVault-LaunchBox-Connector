@@ -1,0 +1,30 @@
+# Build output
+bin/
+obj/
+dist/
+artifacts/
+*.user
+*.suo
+*.rsuser
+.vs/
+.vscode/.vs/
+
+# Logs / temp
+*.log
+*.tmp
+*.bak
+*.cache
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Do not commit local LaunchBox plugin settings or installed binaries
+settings.json
+WebView2Profile/
+Launcher/**/bin/
+Launcher/**/obj/
+
+# NuGet
+*.nupkg
+packages/

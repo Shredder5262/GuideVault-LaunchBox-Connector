@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>GuideVault.LaunchBoxConnector</AssemblyName>
+    <RootNamespace>GuideVault.LaunchBoxConnector</RootNamespace>
+    <Version>0.4.22</Version>
+
+    <!-- Important: compile only the current plugin entry points.
+         Older test files may still be sitting in the source folder if a zip was extracted over a previous build.
+         Do not glob *.cs or those old files re-create duplicate/right-click/Tools menu entries. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LaunchBoxRoot Condition="'$(LaunchBoxRoot)' == ''">D:\HyperspinMasterbuild\LaunchBox</LaunchBoxRoot>
+    <LaunchBoxPluginApi Condition="'$(LaunchBoxPluginApi)' == ''">$(LaunchBoxRoot)\Core\Unbroken.LaunchBox.Plugins.dll</LaunchBoxPluginApi>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="GuideVaultActions.cs" />
+    <Compile Include="GuideVaultAssets.cs" />
+    <Compile Include="GuideVaultClient.cs" />
+    <Compile Include="GuideVaultMatchedItemsBadge.cs" />
+    <Compile Include="GuideVaultRelationshipWindow.cs" />
+    <Compile Include="GuideVaultBadgeCache.cs" />
+    <Compile Include="GuideVaultConnectorWindow.cs" />
+    <Compile Include="GuideVaultWebViewWindow.cs" />
+    <Compile Include="GuideVaultGameMenuPlugin.cs" />
+    <Compile Include="GuideVaultSystemMenuPlugin.cs" />
+    <Compile Include="LaunchBoxGameMapper.cs" />
+    <Compile Include="PluginModels.cs" />
+    <Compile Include="SettingsStore.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Unbroken.LaunchBox.Plugins">
+      <HintPath>$(LaunchBoxPluginApi)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\guidevault-wordmark.png" LogicalName="GuideVault.LaunchBoxConnector.Assets.guidevault-wordmark.png" Condition="Exists('Assets\guidevault-wordmark.png')" />
+    <EmbeddedResource Include="Assets\GuideVault.MatchedItems.png" LogicalName="GuideVault.LaunchBoxConnector.Assets.GuideVault.MatchedItems.png" Condition="Exists('Assets\GuideVault.MatchedItems.png')" />
+  </ItemGroup>
+</Project>

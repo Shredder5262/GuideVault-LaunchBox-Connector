@@ -1,0 +1,18 @@
+This package contains updated GuideVault LaunchBox plugin source only.
+
+Version 0.4.22 is the release-hardening pass for the LaunchBox connector. It keeps the scoped Strategy Guide / Magazine sync work from 0.4.21, adds status/version visibility, prevents stacked sync starts while a match job is active, and improves match-review counts and empty states.
+
+Build on the Windows machine that has the LaunchBox plugin API available:
+
+dotnet build .\GuideVault.LaunchBoxConnector.csproj -c Release
+
+Recommended full local build/install:
+
+.\scripts\Build-Plugin.ps1 -LaunchBoxRoot "D:\HyperspinMasterbuild\LaunchBox"
+.\scripts\Install-Plugin.ps1 -LaunchBoxRoot "D:\HyperspinMasterbuild\LaunchBox" -ForceCloseLaunchBox
+
+Then copy or verify the rebuilt output from:
+
+bin\Release\net9.0-windows\
+
+The matching GuideVault server patch should report server version 0.9.258 or newer.

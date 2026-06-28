@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <LaunchBoxRoot Condition="'$(LaunchBoxRoot)' == ''">D:\HyperspinMasterbuild\LaunchBox</LaunchBoxRoot>
+    <LaunchBoxRoot Condition="'$(LaunchBoxRoot)' == ''">C:\LaunchBox</LaunchBoxRoot>
     <LaunchBoxPluginApi Condition="'$(LaunchBoxPluginApi)' == ''">$(LaunchBoxRoot)\Core\Unbroken.LaunchBox.Plugins.dll</LaunchBoxPluginApi>
   </PropertyGroup>
 

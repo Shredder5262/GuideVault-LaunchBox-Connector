@@ -1,5 +1,5 @@
 param(
-  [string]$LaunchBoxRoot = "D:\HyperspinMasterbuild\LaunchBox",
+  [string]$LaunchBoxRoot = "",
   [string]$Configuration = "Release",
   [string]$Framework = "net9.0-windows",
   [string]$PluginFolderName = "GuideVault",
@@ -9,6 +9,45 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
+
+function Test-LaunchBoxRoot([string]$path) {
+  if ([string]::IsNullOrWhiteSpace($path)) { return $false }
+  if (-not (Test-Path -LiteralPath $path)) { return $false }
+
+  $coreDll = Join-Path $path "Core\Unbroken.LaunchBox.Plugins.dll"
+  $metadataDll = Join-Path $path "Metadata\Unbroken.LaunchBox.Plugins.dll"
+  $launchBoxExe = Join-Path $path "LaunchBox.exe"
+  return (Test-Path -LiteralPath $coreDll) -or (Test-Path -LiteralPath $metadataDll) -or (Test-Path -LiteralPath $launchBoxExe)
+}
+
+function Resolve-LaunchBoxRoot([string]$candidate) {
+  if (Test-LaunchBoxRoot $candidate) {
+    return [System.IO.Path]::GetFullPath($candidate)
+  }
+
+  $candidates = @()
+  if ($env:LAUNCHBOX_ROOT) { $candidates += $env:LAUNCHBOX_ROOT }
+  if ($env:LaunchBoxRoot) { $candidates += $env:LaunchBoxRoot }
+  $candidates += @(
+    "C:\LaunchBox",
+    "D:\LaunchBox",
+    "E:\LaunchBox",
+    (Join-Path $env:USERPROFILE "LaunchBox"),
+    (Join-Path $env:ProgramFiles "LaunchBox"),
+    (Join-Path ${env:ProgramFiles(x86)} "LaunchBox")
+  ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+  foreach ($path in $candidates | Select-Object -Unique) {
+    if (Test-LaunchBoxRoot $path) {
+      return [System.IO.Path]::GetFullPath($path)
+    }
+  }
+
+  throw "Could not find your LaunchBox installation. Rerun with: .\scripts\Install-Plugin.ps1 -LaunchBoxRoot 'C:\Path\To\LaunchBox'"
+}
+
+$LaunchBoxRoot = Resolve-LaunchBoxRoot $LaunchBoxRoot
+
 $OutputDir = Join-Path $ProjectRoot "bin\$Configuration\$Framework"
 $LauncherOutputDir = Join-Path $ProjectRoot "Launcher\GuideVaultReaderLauncher\bin\$Configuration\$Framework"
 $Dll = Join-Path $OutputDir "GuideVault.LaunchBoxConnector.dll"

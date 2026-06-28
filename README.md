@@ -1,73 +1,130 @@
 # GuideVault LaunchBox Connector
 
-LaunchBox plugin for GuideVault. It syncs LaunchBox games with GuideVault manuals, strategy guides, and magazines, then lets you open matched documents directly from LaunchBox.
+LaunchBox plugin for connecting your LaunchBox game library to GuideVault manuals, strategy guides, and magazines.
 
 Current version: **0.4.22**
 
-## Requires
+## What it does
 
-- LaunchBox installed on Windows.
-- .NET 9 SDK for building from source.
-- GuideVault server **0.9.258 or newer**.
-- GuideVault server **0.9.260 or newer recommended**.
+- Syncs LaunchBox games into GuideVault.
+- Matches games to GuideVault manuals, strategy guides, and magazines.
+- Adds scoped sync controls for manuals, guides, and magazines.
+- Adds match review popups so you can inspect what GuideVault matched.
+- Opens matched GuideVault items from LaunchBox.
+- Uses an external WebView2 reader helper so the embedded reader does not load WebView2 directly inside the LaunchBox plugin folder.
+- Adds optional GuideVault badge icons for matched games.
 
-Needed GuideVault server endpoints:
+## Requirements
 
-- `POST /api/integrations/launchbox/sync` with optional `matchTypes`.
-- `GET /api/integrations/launchbox/relationships?matchType=Strategy%20Guide`.
-- `GET /api/integrations/launchbox/relationships?matchType=Magazine`.
-- `GET /api/integrations/launchbox/status` with plugin/server sync status.
+- Windows.
+- LaunchBox or BigBox.
+- GuideVault server **0.9.260 or newer** recommended.
+- Microsoft Edge WebView2 Runtime. Most current Windows systems already have this installed.
+- .NET 9 SDK only if you are building from source.
 
-## Features
+## Install from a release zip
 
-- LaunchBox library sync into GuideVault.
-- Manual, strategy guide, and magazine relationship matching.
-- Scoped sync controls:
-  - Sync selected/all manuals.
-  - Sync selected/all strategy guides.
-  - Sync selected/all magazines.
-- Match review popups for manuals, strategy guides, and magazines.
-- Embedded GuideVault reader window through an external WebView2 helper.
-- Fullscreen reader option.
-- LaunchBox badge support for matched GuideVault items.
-- Status tab with plugin/server/last-sync details.
+Download the release zip named similar to:
 
-## Build
-
-Run from the repository root on the Windows machine that has LaunchBox installed:
-
-```powershell
-.\scripts\Build-Plugin.ps1 -LaunchBoxRoot "D:\HyperspinMasterbuild\LaunchBox"
+```text
+GuideVault-LaunchBox-Connector-0.4.22-LaunchBoxRoot.zip
 ```
 
-Use your actual LaunchBox folder if different.
+Close LaunchBox and BigBox, then extract the contents of the zip directly into your LaunchBox installation folder. This is the folder that contains `LaunchBox.exe`.
 
-## Install locally
+After extraction, the folder layout should look like this:
 
-```powershell
-.\scripts\Install-Plugin.ps1 -LaunchBoxRoot "D:\HyperspinMasterbuild\LaunchBox" -ForceCloseLaunchBox
+```text
+LaunchBox\
+  Plugins\
+    GuideVault\
+      GuideVault.LaunchBoxConnector.dll
+      settings.json
+  ThirdParty\
+    GuideVaultReaderLauncher\
+      GuideVaultReaderLauncher.exe
+  Images\
+    Media Packs\
+      Overrides\
+        Badges\
+          GuideVault.MatchedItems.png
 ```
 
-The install script deploys:
+Start LaunchBox, then open:
+
+```text
+Tools > GuideVault Connector
+```
+
+Set your GuideVault server URL, for example:
+
+```text
+http://localhost:5478
+```
+
+Use the sync buttons from the connector window to sync manuals, strategy guides, and magazines.
+
+## Build from source
+
+The source build needs the LaunchBox plugin API DLL from an installed LaunchBox copy. Do not commit or redistribute the LaunchBox API DLL unless its license permits it.
+
+Install the .NET 9 SDK, then run from the repository root:
+
+```powershell
+.\scripts\Build-Plugin.ps1 -LaunchBoxRoot "C:\Path\To\LaunchBox"
+```
+
+Example LaunchBox roots might be:
+
+```text
+C:\LaunchBox
+D:\LaunchBox
+C:\Users\<you>\LaunchBox
+```
+
+## Install locally after building
+
+```powershell
+.\scripts\Install-Plugin.ps1 -LaunchBoxRoot "C:\Path\To\LaunchBox" -ForceCloseLaunchBox
+```
+
+The install script deploys files into:
 
 ```text
 LaunchBox\Plugins\GuideVault
 LaunchBox\ThirdParty\GuideVaultReaderLauncher
+LaunchBox\Images\Media Packs\Overrides\Badges
 ```
 
-## Package a release zip
+## Create a drag-and-drop LaunchBox release package
+
+Run:
 
 ```powershell
-.\scripts\Package-PluginRelease.ps1 -LaunchBoxRoot "D:\HyperspinMasterbuild\LaunchBox"
+.\scripts\Package-PluginRelease.ps1 -LaunchBoxRoot "C:\Path\To\LaunchBox"
 ```
 
-The generated zip is written to:
+The generated zip is written to `dist` and is structured like a LaunchBox root folder:
 
 ```text
-dist\GuideVault.LaunchBoxConnector-0.4.22-launchbox.zip
+Plugins\GuideVault\...
+ThirdParty\GuideVaultReaderLauncher\...
+Images\Media Packs\Overrides\Badges\...
+README_INSTALL.txt
+RELEASE_NOTES_0.4.22.md
 ```
 
-That zip is meant to be attached to the GitHub release.
+Users can extract that zip directly into their LaunchBox installation folder.
+
+## Server compatibility
+
+GuideVault server **0.9.260+** is recommended.
+
+The connector expects these GuideVault server features:
+
+- LaunchBox sync endpoint with optional match-type scoping.
+- LaunchBox relationship review endpoints.
+- LaunchBox status endpoint with server/plugin sync status.
 
 ## Release notes
 
@@ -76,7 +133,3 @@ See:
 - `CHANGELOG.md`
 - `RELEASE_NOTES_0.4.22.md`
 - `docs/RELEASE_CHECKLIST.md`
-
-## Repository setup
-
-See `docs/GITHUB_SETUP.md`.

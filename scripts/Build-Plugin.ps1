@@ -1,5 +1,5 @@
 param(
-  [string]$LaunchBoxRoot = "D:\HyperspinMasterbuild\LaunchBox",
+  [string]$LaunchBoxRoot = "",
   [string]$Configuration = "Release",
   [string]$Framework = "net9.0-windows"
 )
@@ -8,23 +8,61 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $Project = Join-Path $ProjectRoot "GuideVault.LaunchBoxConnector.csproj"
 $LauncherProject = Join-Path $ProjectRoot "Launcher\GuideVaultReaderLauncher\GuideVaultReaderLauncher.csproj"
-$CoreDll = Join-Path $LaunchBoxRoot "Core\Unbroken.LaunchBox.Plugins.dll"
-$MetadataDll = Join-Path $LaunchBoxRoot "Metadata\Unbroken.LaunchBox.Plugins.dll"
 
-if (-not (Test-Path $Project)) {
-  throw "Could not find project file: $Project. This package should be extracted directly into C:\Users\Andrew\Documents\VSCode\Guidevault-launchbox-plugin."
+function Test-LaunchBoxRoot([string]$path) {
+  if ([string]::IsNullOrWhiteSpace($path)) { return $false }
+  if (-not (Test-Path -LiteralPath $path)) { return $false }
+
+  $coreDll = Join-Path $path "Core\Unbroken.LaunchBox.Plugins.dll"
+  $metadataDll = Join-Path $path "Metadata\Unbroken.LaunchBox.Plugins.dll"
+  $launchBoxExe = Join-Path $path "LaunchBox.exe"
+  return (Test-Path -LiteralPath $coreDll) -or (Test-Path -LiteralPath $metadataDll) -or (Test-Path -LiteralPath $launchBoxExe)
 }
 
-if (-not (Test-Path $LauncherProject)) {
+function Resolve-LaunchBoxRoot([string]$candidate) {
+  if (Test-LaunchBoxRoot $candidate) {
+    return [System.IO.Path]::GetFullPath($candidate)
+  }
+
+  $candidates = @()
+  if ($env:LAUNCHBOX_ROOT) { $candidates += $env:LAUNCHBOX_ROOT }
+  if ($env:LaunchBoxRoot) { $candidates += $env:LaunchBoxRoot }
+  $candidates += @(
+    "C:\LaunchBox",
+    "D:\LaunchBox",
+    "E:\LaunchBox",
+    (Join-Path $env:USERPROFILE "LaunchBox"),
+    (Join-Path $env:ProgramFiles "LaunchBox"),
+    (Join-Path ${env:ProgramFiles(x86)} "LaunchBox")
+  ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+  foreach ($path in $candidates | Select-Object -Unique) {
+    if (Test-LaunchBoxRoot $path) {
+      return [System.IO.Path]::GetFullPath($path)
+    }
+  }
+
+  throw "Could not find your LaunchBox installation. Rerun with: .\scripts\Build-Plugin.ps1 -LaunchBoxRoot 'C:\Path\To\LaunchBox'"
+}
+
+if (-not (Test-Path -LiteralPath $Project)) {
+  throw "Could not find project file: $Project. Run this script from the repository root or the scripts folder inside the source package."
+}
+
+if (-not (Test-Path -LiteralPath $LauncherProject)) {
   throw "Could not find WebView2 launcher project: $LauncherProject."
 }
 
+$LaunchBoxRoot = Resolve-LaunchBoxRoot $LaunchBoxRoot
+$CoreDll = Join-Path $LaunchBoxRoot "Core\Unbroken.LaunchBox.Plugins.dll"
+$MetadataDll = Join-Path $LaunchBoxRoot "Metadata\Unbroken.LaunchBox.Plugins.dll"
+
 $PluginApi = $CoreDll
-if (-not (Test-Path $PluginApi) -and (Test-Path $MetadataDll)) {
+if (-not (Test-Path -LiteralPath $PluginApi) -and (Test-Path -LiteralPath $MetadataDll)) {
   $PluginApi = $MetadataDll
 }
 
-if (-not (Test-Path $PluginApi)) {
+if (-not (Test-Path -LiteralPath $PluginApi)) {
   throw "Could not find Unbroken.LaunchBox.Plugins.dll under '$LaunchBoxRoot\Core' or '$LaunchBoxRoot\Metadata'. Pass -LaunchBoxRoot with your actual LaunchBox install path."
 }
 
@@ -32,9 +70,9 @@ if (-not (Test-Path $PluginApi)) {
 # This deliberately removes ANY embedded-resource item whose Include or LogicalName mentions favicon.png.
 # The plugin no longer needs favicon.png as a compile-time resource; it uses GuideVault.MatchedItems.png for icons/badges.
 $projectText = Get-Content -LiteralPath $Project -Raw
-$projectText = [regex]::Replace($projectText, '(?is)\s*<EmbeddedResource\b(?=[^>]*(?:Include|LogicalName)=[''\"][^''\"]*favicon\.png)[^>]*(?:/>|>.*?</EmbeddedResource>)\s*', "`r`n")
-$projectText = [regex]::Replace($projectText, '(?is)\s*<Resource\b(?=[^>]*(?:Include|LogicalName)=[''\"][^''\"]*favicon\.png)[^>]*(?:/>|>.*?</Resource>)\s*', "`r`n")
-$projectText = [regex]::Replace($projectText, '(?im)^\s*<EmbeddedResource\s+Include=[''\"]Assets[/\\]favicon\.png[''\"][^>]*(?:/>|>.*?</EmbeddedResource>)\s*$', '')
+$projectText = [regex]::Replace($projectText, '(?is)\s*<EmbeddedResource\b(?=[^>]*(?:Include|LogicalName)=[\''\"][^\''\"]*favicon\.png)[^>]*(?:/>|>.*?</EmbeddedResource>)\s*', "`r`n")
+$projectText = [regex]::Replace($projectText, '(?is)\s*<Resource\b(?=[^>]*(?:Include|LogicalName)=[\''\"][^\''\"]*favicon\.png)[^>]*(?:/>|>.*?</Resource>)\s*', "`r`n")
+$projectText = [regex]::Replace($projectText, '(?im)^\s*<EmbeddedResource\s+Include=[\''\"]Assets[/\\]favicon\.png[\''\"][^>]*(?:/>|>.*?</EmbeddedResource>)\s*$', '')
 if ($projectText -notmatch '<EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>') {
   $projectText = $projectText -replace '<EnableDefaultCompileItems>false</EnableDefaultCompileItems>', '<EnableDefaultCompileItems>false</EnableDefaultCompileItems>`r`n    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>'
 }
@@ -44,6 +82,7 @@ $targetLine = Select-String -Path $Project -Pattern '<TargetFramework>' | Select
 Write-Host "Project root: $ProjectRoot"
 Write-Host "Project: $Project"
 Write-Host "WebView2 launcher: $LauncherProject"
+Write-Host "LaunchBox root: $LaunchBoxRoot"
 Write-Host "LaunchBox plugin API: $PluginApi"
 Write-Host "Target: $($targetLine.Line.Trim())"
 
@@ -66,7 +105,7 @@ if ($remainingFaviconResource) { throw "A stale favicon embedded resource is sti
 $sdks = dotnet --list-sdks
 if ($LASTEXITCODE -ne 0) { throw "dotnet SDK was not found on PATH." }
 if (($sdks -join "`n") -notmatch '^9\.') {
-  throw "The .NET 9 SDK is required because your LaunchBox plugin API references System.Runtime 9.0. Install .NET 9 SDK, then retry."
+  throw "The .NET 9 SDK is required because the LaunchBox plugin API references System.Runtime 9.0. Install .NET 9 SDK, then retry."
 }
 
 $expectedSourceFiles = @(
